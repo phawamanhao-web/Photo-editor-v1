@@ -3,359 +3,510 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pro Master Photo Editor</title>
+    <title>Photo Editor by Manhao O Phawa</title>
     <style>
+        :root {
+            /* Fun, modern, and inviting light palette */
+            --bg-main: #f4f5f6;
+            --bg-surface: #ffffff;
+            --bg-control: #f8fafc;
+            --border-color: #e2e8f0;
+            --accent-primary: #6366f1; /* Cool Indigo */
+            --accent-hover: #4f46e5;
+            --accent-success: #10b981;
+            --accent-danger: #ef4444;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+        }
+
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            letter-spacing: -0.01em;
         }
 
         body {
-            background-color: #121214;
-            color: #e1e1e6;
+            background-color: var(--bg-main);
+            color: var(--text-main);
             display: flex;
             flex-direction: column;
-            align-items: center;
-            padding: 20px;
             min-height: 100vh;
+            overflow: hidden; /* Keeps window scrollbars from double-rendering */
         }
 
+        /* Top Bar Branding */
         header {
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        h1 {
-            color: #ffffff;
-            font-size: 26px;
-            margin-bottom: 5px;
-        }
-
-        p {
-            color: #8d8d99;
-        }
-
-        .container {
+            background-color: var(--bg-surface);
+            border-bottom: 1px solid var(--border-color);
+            padding: 14px 24px;
             display: flex;
-            flex-direction: column;
-            background: #202024;
-            border-radius: 12px;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-            width: 100%;
-            max-width: 1100px;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        }
+
+        .brand-title {
+            font-size: 16px;
+            font-weight: 800;
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
+            background: linear-gradient(to right, var(--accent-primary), #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .brand-subtitle {
+            font-size: 12px;
+            color: var(--accent-primary);
+            font-weight: 700;
+            background: rgba(99, 102, 241, 0.08);
+            padding: 6px 14px;
+            border-radius: 20px;
+        }
+
+        /* App Layout Frame */
+        .app-layout {
+            display: flex;
+            flex: 1;
+            height: calc(100vh - 49px);
             overflow: hidden;
-            border: 1px solid #2e2e33;
         }
 
-        @media (min-width: 900px) {
-            .container {
-                flex-direction: row;
-            }
-        }
-
-        /* Workspace Area */
+        /* Canvas Workspace Viewport */
         .workspace {
             flex: 1;
-            background-color: #1a1a1e;
+            background-image: radial-gradient(#cbd5e1 1px, transparent 0);
+            background-size: 20px 20px;
+            background-color: #f1f5f9;
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 20px;
-            min-height: 450px;
-            position: relative;
+            padding: 40px;
+            overflow: auto; /* Allows workspace tracking */
         }
 
         canvas {
             max-width: 100%;
-            max-height: 600px;
-            box-shadow: 0 4px 30px rgba(0,0,0,0.5);
+            max-height: 75vh;
+            border-radius: 12px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
             display: none; 
+            background-color: #ffffff;
+        }
+
+        canvas.dropper-active {
+            cursor: cell;
         }
 
         .upload-placeholder {
-            color: #7c7c8a;
+            color: var(--text-muted);
             text-align: center;
             cursor: pointer;
-            border: 2px dashed #41414c;
-            padding: 50px;
-            border-radius: 8px;
-            transition: all 0.2s;
+            border: 2px dashed #cbd5e1;
+            padding: 60px 40px;
+            border-radius: 16px;
+            background-color: var(--bg-surface);
+            transition: all 0.25s ease;
+            max-width: 400px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
         }
 
         .upload-placeholder:hover {
-            border-color: #0070f3;
-            color: #ffffff;
+            border-color: var(--accent-primary);
+            color: var(--text-main);
+            transform: translateY(-2px);
+            box-shadow: 0 20px 25px -5px rgba(99, 102, 241, 0.1);
         }
 
-        /* Controls Sidebar */
-        .controls {
-            width: 100%;
-            padding: 25px;
-            background: #202024;
-            border-top: 1px solid #2e2e33;
-            max-height: none;
+        .upload-placeholder svg {
+            color: var(--accent-primary);
+            margin-bottom: 16px;
+            transition: transform 0.2s ease;
         }
 
-        @media (min-width: 900px) {
-            .controls {
-                width: 380px;
-                border-top: none;
-                border-left: 1px solid #2e2e33;
-                overflow-y: auto;
-                max-height: 700px;
-            }
+        .upload-placeholder:hover svg {
+            transform: scale(1.1);
+        }
+
+        /* THE FIX: Fixed Sidebar Structure supporting inner scroll */
+        .controls-sidebar {
+            width: 360px;
+            background-color: var(--bg-surface);
+            border-left: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            height: 100%; /* Lock viewport target size */
+        }
+
+        /* This container handles scrolling smoothly */
+        .scrollable-settings {
+            flex: 1;
+            overflow-y: auto; /* Toggles vertical scrolling */
+            padding: 24px;
         }
 
         .section-title {
-            font-size: 12px;
+            font-size: 11px;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            color: #0070f3;
-            margin: 15px 0 10px 0;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            margin: 24px 0 12px 0;
             font-weight: 700;
         }
 
+        .section-title:first-of-type {
+            margin-top: 0;
+        }
+
         .control-group {
-            margin-bottom: 16px;
-            background: #29292e;
-            padding: 12px;
-            border-radius: 8px;
+            margin-bottom: 14px;
+            background: var(--bg-control);
+            padding: 14px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
         }
 
         label {
             display: block;
             font-size: 13px;
             font-weight: 600;
-            color: #c4c4cc;
+            color: var(--text-main);
         }
 
         .slider-label-wrapper {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            margin-bottom: 8px;
         }
 
         .value-badge {
             font-size: 12px;
-            color: #8d8d99;
-            background: #121214;
+            color: var(--accent-primary);
+            font-weight: 700;
+            font-family: monospace;
+            background: rgba(99, 102, 241, 0.08);
             padding: 2px 6px;
             border-radius: 4px;
         }
 
         input[type="range"] {
             width: 100%;
-            margin-top: 8px;
-            accent-color: #0070f3;
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 3px;
+            appearance: none;
+            outline: none;
             cursor: pointer;
         }
+
+        input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--accent-primary);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.1s ease;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            background: var(--accent-hover);
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 10px 12px;
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-main);
+            margin-bottom: 12px;
+            font-size: 13px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .color-row {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .color-picker-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: #ffffff;
+            padding: 4px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        input[type="color"] {
+            border: none;
+            width: 28px;
+            height: 28px;
+            background: transparent;
+            cursor: pointer;
+            appearance: none;
+        }
+
+        input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+        input[type="color"]::-webkit-color-swatch { border-radius: 6px; border: 1px solid var(--border-color); }
 
         .btn-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 8px;
-            margin-top: 5px;
         }
 
         button, .file-input-label {
-            display: block;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             width: 100%;
-            padding: 11px;
-            background-color: #0070f3;
+            padding: 10px 16px;
+            background-color: var(--accent-primary);
             color: white;
             border: none;
-            border-radius: 6px;
+            border-radius: 8px;
             font-weight: 600;
             font-size: 13px;
-            text-align: center;
             cursor: pointer;
-            transition: background-color 0.2s;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(99, 102, 241, 0.1);
         }
 
         button:hover, .file-input-label:hover {
-            background-color: #0051b3;
+            background-color: var(--accent-hover);
+            transform: translateY(-1px);
         }
 
         button:disabled, .file-input-label:disabled {
             opacity: 0.3;
             cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
         }
 
         button.secondary {
-            background-color: #323238;
-            color: #e1e1e6;
+            background-color: #ffffff;
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
         }
 
         button.secondary:hover:not(:disabled) {
-            background-color: #41414c;
+            background-color: var(--bg-control);
+            border-color: #cbd5e1;
         }
 
-        button.active-filter {
-            background-color: #12a454;
-            color: white;
+        button.active-toggle {
+            background-color: rgba(99, 102, 241, 0.12);
+            color: var(--accent-primary);
+            border: 1px solid var(--accent-primary);
         }
 
-        button.danger {
-            background-color: #f75a68;
+        .color-preview-box {
+            flex: 1;
+            height: 38px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-family: monospace;
+            color: var(--text-muted);
+            background: #ffffff;
         }
 
-        button.danger:hover:not(:disabled) {
-            background-color: #c74652;
-        }
-
-        button.crop-active {
-            background-color: #e16e0e;
+        /* Action Drawer Panel */
+        .bottom-actions {
+            padding: 20px 24px;
+            background-color: var(--bg-surface);
+            border-top: 1px solid var(--border-color);
         }
 
         #file-upload {
             display: none;
         }
-
-        hr {
-            border: 0;
-            border-top: 1px solid #2e2e33;
-            margin: 20px 0;
-        }
     </style>
 </head>
 <body>
 
+    <!-- Header Module -->
     <header>
-        <h1>Pro Master Photo Editor</h1>
-        <p>Advanced studio parameters: Geometry, Vignette, Hue & Shading</p>
+        <div class="brand-title">Photo Editor</div>
+        <div class="brand-subtitle">by Manhao O Phawa</div>
     </header>
 
-    <div class="container">
-        <!-- Main Canvas Frame -->
+    <div class="app-layout">
+        <!-- Main Creative Canvas Viewport -->
         <div class="workspace">
             <label for="file-upload" class="upload-placeholder" id="placeholder">
-                <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin: 0 auto 12px;">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 002-2H4a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                <svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H4a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                 </svg>
-                <span>Import Studio Photo</span>
+                <div style="font-weight: 700; font-size: 15px; margin-bottom: 4px; color: var(--text-main);">Upload a Photo</div>
+                <div style="font-size: 12px; color: var(--text-muted);">Drop files or tap to browse images</div>
             </label>
             <canvas id="editorCanvas"></canvas>
         </div>
 
-        <!-- Toolbar Sidebar -->
-        <div class="controls">
-            <div class="control-group" style="background: transparent; padding: 0;">
-                <label class="file-input-label" for="file-upload">Load Image Asset</label>
-                <input type="file" id="file-upload" accept="image/*">
-            </div>
-
-            <div class="section-title">Geometric Tools</div>
-            <div class="control-group">
-                <div class="slider-label-wrapper">
-                    <label for="rotate">Rotation Engine</label>
-                    <span id="rotate-val" class="value-badge">0°</span>
-                </div>
-                <input type="range" id="rotate" min="0" max="360" value="0" disabled>
+        <!-- Sidebar Tools Deck -->
+        <div class="controls-sidebar">
+            <div class="scrollable-settings">
                 
-                <div class="btn-grid" style="margin-top: 10px;">
-                    <button type="button" class="secondary" id="btn-flip" disabled>Mirror ⇆</button>
-                    <button type="button" class="secondary" id="btn-crop" disabled>Crop 50% Center</button>
+                <div class="section-title">File Management</div>
+                <div class="control-group" style="background: transparent; padding: 0; border: none;">
+                    <label class="file-input-label" for="file-upload">Choose Source Image</label>
+                    <input type="file" id="file-upload" accept="image/*">
+                </div>
+
+                <div class="section-title">Color Calibration</div>
+                <div class="control-group">
+                    <div class="slider-label-wrapper">
+                        <label for="brightness">Brightness</label>
+                        <span id="brightness-val" class="value-badge">100%</span>
+                    </div>
+                    <input type="range" id="brightness" min="0" max="200" value="100" disabled>
+                </div>
+
+                <div class="control-group">
+                    <div class="slider-label-wrapper">
+                        <label for="contrast">Contrast</label>
+                        <span id="contrast-val" class="value-badge">100%</span>
+                    </div>
+                    <input type="range" id="contrast" min="0" max="200" value="100" disabled>
+                </div>
+
+                <div class="control-group">
+                    <div class="slider-label-wrapper">
+                        <label for="saturation">Saturation</label>
+                        <span id="saturation-val" class="value-badge">100%</span>
+                    </div>
+                    <input type="range" id="saturation" min="0" max="200" value="100" disabled>
+                </div>
+
+                <div class="control-group">
+                    <div class="slider-label-wrapper">
+                        <label for="hue">Hue Spectrum Shift</label>
+                        <span id="hue-val" class="value-badge">0°</span>
+                    </div>
+                    <input type="range" id="hue" min="0" max="360" value="0" disabled>
+                </div>
+
+                <div class="section-title">Atmospherics & Effects</div>
+                <div class="control-group">
+                    <div class="slider-label-wrapper">
+                        <label for="vignette">Radial Vignette Shading</label>
+                        <span id="vignette-val" class="value-badge">0%</span>
+                    </div>
+                    <input type="range" id="vignette" min="0" max="100" value="0" disabled>
+                </div>
+
+                <div class="control-group">
+                    <div class="slider-label-wrapper">
+                        <label for="light-leak">Light Leak Artifacts</label>
+                        <span id="light-leak-val" class="value-badge">0%</span>
+                    </div>
+                    <input type="range" id="light-leak" min="0" max="100" value="0" disabled>
+                </div>
+
+                <div class="section-title">Presets & Styling Mapping</div>
+                <div class="control-group">
+                    <label style="margin-bottom: 10px;">Duotone Core Profiling</label>
+                    <div class="color-row" style="margin-bottom: 12px;">
+                        <div class="color-picker-wrapper">
+                            <input type="color" id="duotone-dark" value="#3b2d54">
+                        </div>
+                        <div class="color-picker-wrapper">
+                            <input type="color" id="duotone-light" value="#ffd3d3">
+                        </div>
+                        <button type="button" class="secondary" id="btn-apply-duotone" style="padding: 6px;" disabled>Map Colors</button>
+                    </div>
+                    <div class="btn-grid">
+                        <button type="button" class="secondary" id="btn-grayscale" disabled>Grayscale</button>
+                        <button type="button" class="secondary" id="btn-invert" disabled>Invert Map</button>
+                    </div>
+                </div>
+
+                <div class="section-title">Studio Layers</div>
+                <div class="control-group">
+                    <label for="text-input">Typography Watermark</label>
+                    <input type="text" id="text-input" placeholder="Enter overlay layer text..." disabled>
+                    
+                    <div class="slider-label-wrapper">
+                        <label for="text-size">Scale Dimensions</label>
+                        <span id="text-size-val" class="value-badge">40px</span>
+                    </div>
+                    <input type="range" id="text-size" min="16" max="120" value="40" disabled>
+                </div>
+
+                <div class="section-title">Color Inspection</div>
+                <div class="control-group">
+                    <div class="color-row">
+                        <button type="button" class="secondary" id="btn-dropper" disabled>Sample Pixel</button>
+                        <div class="color-preview-box" id="dropper-preview">#-- -- --</div>
+                    </div>
                 </div>
             </div>
 
-            <div class="section-title">Coloring & Filters</div>
-            <div class="control-group">
-                <div class="slider-label-wrapper">
-                    <label for="hue">Hue Spectrum Shift</label>
-                    <span id="hue-val" class="value-badge">0°</span>
-                </div>
-                <input type="range" id="hue" min="0" max="360" value="0" disabled>
+            <!-- Footer Action Bar -->
+            <div class="bottom-actions">
+                <button type="button" id="btn-reset" style="background-color: transparent; border: 1px solid var(--border-color); color: var(--accent-danger); margin-bottom: 8px; box-shadow: none;" disabled>Reset Workspace</button>
+                <button type="button" id="btn-download" style="background-color: var(--text-main); color: #ffffff;" disabled>Export Master Render</button>
             </div>
-
-            <div class="control-group">
-                <div class="slider-label-wrapper">
-                    <label for="brightness">Brightness</label>
-                    <span id="brightness-val" class="value-badge">100%</span>
-                </div>
-                <input type="range" id="brightness" min="0" max="200" value="100" disabled>
-            </div>
-
-            <div class="control-group">
-                <div class="slider-label-wrapper">
-                    <label for="contrast">Contrast</label>
-                    <span id="contrast-val" class="value-badge">100%</span>
-                </div>
-                <input type="range" id="contrast" min="0" max="200" value="100" disabled>
-            </div>
-
-            <div class="control-group">
-                <div class="slider-label-wrapper">
-                    <label for="saturation">Saturation</label>
-                    <span id="saturation-val" class="value-badge">100%</span>
-                </div>
-                <input type="range" id="saturation" min="0" max="200" value="100" disabled>
-            </div>
-
-            <div class="section-title">Effects & Hardware Overlays</div>
-            <div class="control-group">
-                <div class="slider-label-wrapper">
-                    <label for="vignette">Vignette Edge Shade</label>
-                    <span id="vignette-val" class="value-badge">0%</span>
-                </div>
-                <input type="range" id="vignette" min="0" max="100" value="0" disabled>
-            </div>
-
-            <div class="control-group">
-                <div class="slider-label-wrapper">
-                    <label for="noise">Film Grain Noise</label>
-                    <span id="noise-val" class="value-badge">0%</span>
-                </div>
-                <input type="range" id="noise" min="0" max="100" value="0" disabled>
-            </div>
-
-            <div class="control-group">
-                <div class="btn-grid" style="grid-template-columns: 1fr 1fr 1fr; margin-top: 0;">
-                    <button type="button" class="secondary" id="btn-grayscale" disabled>Gray</button>
-                    <button type="button" class="secondary" id="btn-sepia" disabled>Sepia</button>
-                    <button type="button" class="secondary" id="btn-invert" disabled>Invert</button>
-                </div>
-            </div>
-
-            <hr>
-
-            <button type="button" class="danger" id="btn-reset" style="margin-bottom: 10px;" disabled>Reset Workspace</button>
-            <button type="button" id="btn-download" disabled>Export Render Output</button>
         </div>
     </div>
 
+    <!-- Core Engine Scripts -->
     <script>
         const fileUpload = document.getElementById('file-upload');
         const canvas = document.getElementById('editorCanvas');
         const ctx = canvas.getContext('2d');
         const placeholder = document.getElementById('placeholder');
         
-        // Element Links
+        // Element Maps
         const brightnessSlider = document.getElementById('brightness');
         const contrastSlider = document.getElementById('contrast');
         const saturationSlider = document.getElementById('saturation');
         const hueSlider = document.getElementById('hue');
-        const rotateSlider = document.getElementById('rotate');
         const vignetteSlider = document.getElementById('vignette');
-        const noiseSlider = document.getElementById('noise');
+        const lightLeakSlider = document.getElementById('light-leak');
+        
+        const textInput = document.getElementById('text-input');
+        const textSizeSlider = document.getElementById('text-size');
+        
+        const duotoneDark = document.getElementById('duotone-dark');
+        const duotoneLight = document.getElementById('duotone-light');
+        const btnApplyDuotone = document.getElementById('btn-apply-duotone');
         
         const btnGrayscale = document.getElementById('btn-grayscale');
-        const btnSepia = document.getElementById('btn-sepia');
         const btnInvert = document.getElementById('btn-invert');
-        const btnFlip = document.getElementById('btn-flip');
-        const btnCrop = document.getElementById('btn-crop');
+        const btnDropper = document.getElementById('btn-dropper');
+        const dropperPreview = document.getElementById('dropper-preview');
         
         const btnReset = document.getElementById('btn-reset');
         const btnDownload = document.getElementById('btn-download');
 
-        // App States
+        // State Engines
         let originalImg = new Image();
-        let sourceDimensions = { w: 0, h: 0, x: 0, y: 0 };
+        let useDuotone = false;
         let isGrayscale = false;
-        let isSepia = false;
         let isInverted = false;
-        let isFlipped = false;
+        let dropperActive = false;
 
         fileUpload.addEventListener('change', function(e) {
             const file = e.target.files[0];
@@ -364,12 +515,6 @@
             const reader = new FileReader();
             reader.onload = function(event) {
                 originalImg.onload = function() {
-                    // Initialize raw layout boundaries
-                    sourceDimensions.w = originalImg.width;
-                    sourceDimensions.h = originalImg.height;
-                    sourceDimensions.x = 0;
-                    sourceDimensions.y = 0;
-
                     canvas.width = originalImg.width;
                     canvas.height = originalImg.height;
                     
@@ -378,185 +523,211 @@
 
                     enableControls();
                     resetToDefaults();
-                    applyPipeline(); 
+                    runRenderPipeline(); 
                 }
                 originalImg.src = event.target.result;
             }
             reader.readAsDataURL(file);
         });
 
-        // Set up generic live listeners
-        const uiSliders = [
+        // Live slider pipelines configuration
+        const liveSliders = [
             { el: brightnessSlider, suffix: '%' },
             { el: contrastSlider, suffix: '%' },
             { el: saturationSlider, suffix: '%' },
             { el: hueSlider, suffix: '°' },
-            { el: rotateSlider, suffix: '°' },
             { el: vignetteSlider, suffix: '%' },
-            { el: noiseSlider, suffix: '%' }
+            { el: lightLeakSlider, suffix: '%' },
+            { el: textSizeSlider, suffix: 'px' }
         ];
 
-        uiSliders.forEach(item => {
+        liveSliders.forEach(item => {
             item.el.addEventListener('input', function() {
                 document.getElementById(`${this.id}-val`).textContent = this.value + item.suffix;
-                applyPipeline();
+                runRenderPipeline();
             });
         });
 
-        // Toggle Filter Triggers
-        const toggleFilters = [
-            { btn: btnGrayscale, get: () => isGrayscale, set: (v) => isGrayscale = v },
-            { btn: btnSepia, get: () => isSepia, set: (v) => isSepia = v },
-            { btn: btnInvert, get: () => isInverted, set: (v) => isInverted = v },
-            { btn: btnFlip, get: () => isFlipped, set: (v) => isFlipped = v }
-        ];
+        textInput.addEventListener('input', runRenderPipeline);
 
-        toggleFilters.forEach(item => {
-            item.btn.addEventListener('click', function() {
-                item.set(!item.get());
-                this.classList.toggle('active-filter', item.get());
-                this.classList.toggle('secondary', !item.get());
-                applyPipeline();
-            });
+        btnGrayscale.addEventListener('click', function() {
+            isGrayscale = !isGrayscale;
+            this.classList.toggle('active-toggle', isGrayscale);
+            runRenderPipeline();
         });
 
-        // Interactive 50% Center Crop Tool Action
-        btnCrop.addEventListener('click', function() {
-            // Cut viewport square calculations in half
-            const cropW = sourceDimensions.w * 0.5;
-            const cropH = sourceDimensions.h * 0.5;
-            const cropX = sourceDimensions.x + (sourceDimensions.w * 0.25);
-            const cropY = sourceDimensions.y + (sourceDimensions.h * 0.25);
+        btnInvert.addEventListener('click', function() {
+            isInverted = !isInverted;
+            this.classList.toggle('active-toggle', isInverted);
+            runRenderPipeline();
+        });
 
-            sourceDimensions.w = cropW;
-            sourceDimensions.h = cropH;
-            sourceDimensions.x = cropX;
-            sourceDimensions.y = cropY;
+        btnApplyDuotone.addEventListener('click', function() {
+            useDuotone = !useDuotone;
+            this.classList.toggle('active-toggle', useDuotone);
+            this.textContent = useDuotone ? "Clear Profile" : "Map Colors";
+            runRenderPipeline();
+        });
 
-            canvas.width = cropW;
-            canvas.height = cropH;
-            applyPipeline();
+        btnDropper.addEventListener('click', function() {
+            dropperActive = !dropperActive;
+            this.classList.toggle('active-toggle', dropperActive);
+            canvas.classList.toggle('dropper-active', dropperActive);
+        });
+
+        canvas.addEventListener('click', function(e) {
+            if (!dropperActive) return;
+
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+
+            const x = (e.clientX - rect.left) * scaleX;
+            const y = (e.clientY - rect.top) * scaleY;
+
+            const pixel = ctx.getImageData(x, y, 1, 1).data;
+            const hex = "#" + ((1 << 24) + (pixel[0] << 16) + (pixel[1] << 8) + pixel[2]).toString(16).slice(1);
+
+            dropperPreview.style.backgroundColor = hex;
+            dropperPreview.style.color = (pixel[0]*0.299 + pixel[1]*0.587 + pixel[2]*0.114) > 186 ? '#000000' : '#ffffff';
+            dropperPreview.textContent = hex.toUpperCase();
+
+            dropperActive = false;
+            btnDropper.classList.remove('active-toggle');
+            canvas.classList.remove('dropper-active');
         });
 
         btnReset.addEventListener('click', function() {
             resetToDefaults();
-            applyPipeline();
+            runRenderPipeline();
         });
 
         btnDownload.addEventListener('click', function() {
             const link = document.createElement('a');
-            link.download = 'studio-export.png';
+            link.download = 'Manhao-Studio-Render.png';
             link.href = canvas.toDataURL();
             link.click();
         });
 
-        // --- Core Studio Rendering Operations Pipeline ---
-        function applyPipeline() {
+        // --- Studio Computational Image Pipeline ---
+        function runRenderPipeline() {
             if (!originalImg.src) return;
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.save();
 
-            // 1. Structural Transformations (Translation, Flipping, Rotating)
-            ctx.translate(canvas.width / 2, canvas.height / 2);
-            
-            if (isFlipped) {
-                ctx.scale(-1, 1); 
-            }
-            
-            const degrees = parseInt(rotateSlider.value);
-            if (degrees !== 0) {
-                ctx.rotate((degrees * Math.PI) / 180);
-            }
-            
-            // 2. Hardware Accelerated CSS Filters Assembly
-            let filterString = `
+            // 1. Build and apply composite filter string array
+            let filters = `
                 brightness(${brightnessSlider.value}%) 
                 contrast(${contrastSlider.value}%) 
                 saturate(${saturationSlider.value}%)
                 hue-rotate(${hueSlider.value}deg)
             `;
-            if (isGrayscale) filterString += ' grayscale(100%)';
-            if (isSepia) filterString += ' sepia(100%)';
-            if (isInverted) filterString += ' invert(100%)';
-            
-            ctx.filter = filterString;
+            if (isGrayscale) filters += ' grayscale(100%)';
+            if (isInverted) filters += ' invert(100%)';
 
-            // Draw image relative to translation center coordinates
-            ctx.drawImage(
-                originalImg,
-                sourceDimensions.x, sourceDimensions.y, sourceDimensions.w, sourceDimensions.h,
-                -canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height
-            );
+            ctx.filter = filters;
+            ctx.drawImage(originalImg, 0, 0, canvas.width, canvas.height);
+            ctx.restore();
 
-            ctx.restore(); // Drop active CSS matrices to allow clear effect layouts over top
-
-            // 3. Vignette Shader Overlay Generation (Calculated using Radial Gradients)
-            const vignetteIntensity = parseInt(vignetteSlider.value) / 100;
-            if (vignetteIntensity > 0) {
-                const centerX = canvas.width / 2;
-                const centerY = canvas.height / 2;
-                const outerRadius = Math.sqrt(centerX * centerX + centerY * centerY);
-
-                const gradient = ctx.createRadialGradient(centerX, centerY, outerRadius * 0.3, centerX, centerY, outerRadius);
-                gradient.addColorStop(0, 'rgba(0,0,0,0)');
-                gradient.addColorStop(1, `rgba(0,0,0,${vignetteIntensity * 0.85})`);
-                
-                ctx.fillStyle = gradient;
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-            }
-
-            // 4. Perlin-Style Grain Noise Engine (Pixel Matrix Injection)
-            const noiseIntensity = parseInt(noiseSlider.value);
-            if (noiseIntensity > 0) {
+            // 2. Duotone Remap Array Calculations
+            if (useDuotone) {
                 const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
                 const data = imgData.data;
-                const factor = noiseIntensity * 0.4;
+                const dark = hexToRgb(duotoneDark.value);
+                const light = hexToRgb(duotoneLight.value);
 
                 for (let i = 0; i < data.length; i += 4) {
-                    // Generate unique fast pseudo-random noise shift values
-                    const noise = (Math.random() - 0.5) * factor;
-                    data[i]     = Math.min(255, Math.max(0, data[i] + noise));     // Red
-                    data[i + 1] = Math.min(255, Math.max(0, data[i + 1] + noise)); // Green
-                    data[i + 2] = Math.min(255, Math.max(0, data[i + 2] + noise)); // Blue
+                    const luma = (0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2]) / 255;
+                    data[i]     = dark.r + (light.r - dark.r) * luma;
+                    data[i + 1] = dark.g + (light.g - dark.g) * luma;
+                    data[i + 2] = dark.b + (light.b - dark.b) * luma;
                 }
                 ctx.putImageData(imgData, 0, 0);
             }
+
+            // 3. Vintage Lighting Artifact Overlay
+            const leakVal = parseInt(lightLeakSlider.value);
+            if (leakVal > 0) {
+                ctx.save();
+                const leakGrad = ctx.createLinearGradient(0, 0, canvas.width * 0.8, canvas.height * 0.5);
+                leakGrad.addColorStop(0, `rgba(239, 68, 68, ${leakVal / 140})`);
+                leakGrad.addColorStop(0.6, `rgba(245, 158, 11, ${leakVal / 280})`);
+                leakGrad.addColorStop(1, 'rgba(0,0,0,0)');
+                ctx.fillStyle = leakGrad;
+                ctx.globalCompositeOperation = "screen";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.restore();
+            }
+
+            // 4. Radial Vignette Gradient Frame Setup
+            const vigVal = parseInt(vignetteSlider.value) / 100;
+            if (vigVal > 0) {
+                const cx = canvas.width / 2;
+                const cy = canvas.height / 2;
+                const maxR = Math.sqrt(cx*cx + cy*cy);
+                const grad = ctx.createRadialGradient(cx, cy, maxR * 0.4, cx, cy, maxR);
+                grad.addColorStop(0, 'rgba(0,0,0,0)');
+                grad.addColorStop(1, `rgba(0,0,0,${vigVal * 0.9})`);
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+
+            // 5. Canvas Vector Typography Injection
+            const textText = textInput.value.trim();
+            if (textText !== "") {
+                ctx.save();
+                const fontSize = parseInt(textSizeSlider.value);
+                ctx.font = `700 ${fontSize}px 'Inter', sans-serif`;
+                ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.shadowColor = "rgba(0,0,0,0.5)";
+                ctx.shadowBlur = 12;
+                ctx.fillText(textText, canvas.width / 2, canvas.height - (fontSize * 2));
+                ctx.restore();
+            }
+        }
+
+        function hexToRgb(hex) {
+            const parsed = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return parsed ? { r: parseInt(parsed[1], 16), g: parseInt(parsed[2], 16), b: parseInt(parsed[3], 16) } : { r: 0, g: 0, b: 0 };
         }
 
         function enableControls() {
-            const controls = document.querySelectorAll('.controls input, .controls button');
-            controls.forEach(control => control.removeAttribute('disabled'));
+            document.querySelectorAll('.controls-sidebar input, .controls-sidebar button').forEach(el => el.removeAttribute('disabled'));
         }
 
         function resetToDefaults() {
-            sourceDimensions = { w: originalImg.width, h: originalImg.height, x: 0, y: 0 };
-            canvas.width = originalImg.width;
-            canvas.height = originalImg.height;
-
             brightnessSlider.value = 100;
             contrastSlider.value = 100;
             saturationSlider.value = 100;
             hueSlider.value = 0;
-            rotateSlider.value = 0;
             vignetteSlider.value = 0;
-            noiseSlider.value = 0;
+            lightLeakSlider.value = 0;
+            textSizeSlider.value = 40;
+            textInput.value = "";
             
+            useDuotone = false;
             isGrayscale = false;
-            isSepia = false;
             isInverted = false;
-            isFlipped = false;
-            
-            uiSliders.forEach(item => {
-                const val = item.el.id === 'brightness' || item.el.id === 'contrast' || item.el.id === 'saturation' ? '100' : '0';
-                document.getElementById(`${item.el.id}-val`).textContent = val + item.suffix;
+            dropperActive = false;
+
+            liveSliders.forEach(item => {
+                const val = (item.el.id.match(/^(brightness|contrast|saturation)$/)) ? '100' : '0';
+                document.getElementById(`${item.el.id}-val`).textContent = (item.el.id === 'text-size') ? '40px' : val + item.suffix;
             });
 
-            toggleFilters.forEach(item => {
-                item.btn.classList.remove('active-filter');
-                item.btn.classList.add('secondary');
-            });
+            btnApplyDuotone.textContent = "Map Colors";
+            btnApplyDuotone.classList.remove('active-toggle');
+            btnGrayscale.classList.remove('active-toggle');
+            btnInvert.classList.remove('active-toggle');
+            btnDropper.classList.remove('active-toggle');
+            canvas.classList.remove('dropper-active');
+            dropperPreview.style.backgroundColor = '#ffffff';
+            dropperPreview.style.color = 'var(--text-muted)';
+            dropperPreview.textContent = '#-- -- --';
         }
     </script>
 </body>
-                        </html>
+</html>
