@@ -3,133 +3,560 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Web PUBG Mini-Game</title>
+    <title>Pro Master Photo Editor</title>
     <style>
-        body {
+        * {
+            box-sizing: border-box;
             margin: 0;
-            overflow: hidden;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            user-select: none;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         }
-        #crosshair {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 10px;
-            height: 10px;
-            border: 2px solid white;
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            pointer-events: none;
-            z-index: 10;
-        }
-        #ui {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            color: white;
-            font-size: 24px;
-            font-weight: bold;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
-            z-index: 10;
-            background: rgba(0,0,0,0.4);
-            padding: 10px 20px;
-            border-radius: 5px;
-        }
-        #instructions {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.75);
-            color: white;
+
+        body {
+            background-color: #121214;
+            color: #e1e1e6;
             display: flex;
             flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        header {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #ffffff;
+            font-size: 26px;
+            margin-bottom: 5px;
+        }
+
+        p {
+            color: #8d8d99;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            background: #202024;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 1100px;
+            overflow: hidden;
+            border: 1px solid #2e2e33;
+        }
+
+        @media (min-width: 900px) {
+            .container {
+                flex-direction: row;
+            }
+        }
+
+        /* Workspace Area */
+        .workspace {
+            flex: 1;
+            background-color: #1a1a1e;
+            display: flex;
             justify-content: center;
             align-items: center;
+            padding: 20px;
+            min-height: 450px;
+            position: relative;
+        }
+
+        canvas {
+            max-width: 100%;
+            max-height: 600px;
+            box-shadow: 0 4px 30px rgba(0,0,0,0.5);
+            display: none; 
+        }
+
+        .upload-placeholder {
+            color: #7c7c8a;
             text-align: center;
-            z-index: 20;
+            cursor: pointer;
+            border: 2px dashed #41414c;
+            padding: 50px;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .upload-placeholder:hover {
+            border-color: #0070f3;
+            color: #ffffff;
+        }
+
+        /* Controls Sidebar */
+        .controls {
+            width: 100%;
+            padding: 25px;
+            background: #202024;
+            border-top: 1px solid #2e2e33;
+            max-height: none;
+        }
+
+        @media (min-width: 900px) {
+            .controls {
+                width: 380px;
+                border-top: none;
+                border-left: 1px solid #2e2e33;
+                overflow-y: auto;
+                max-height: 700px;
+            }
+        }
+
+        .section-title {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #0070f3;
+            margin: 15px 0 10px 0;
+            font-weight: 700;
+        }
+
+        .control-group {
+            margin-bottom: 16px;
+            background: #29292e;
+            padding: 12px;
+            border-radius: 8px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #c4c4cc;
+        }
+
+        .slider-label-wrapper {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .value-badge {
+            font-size: 12px;
+            color: #8d8d99;
+            background: #121214;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            margin-top: 8px;
+            accent-color: #0070f3;
             cursor: pointer;
         }
-        #instructions h1 {
-            font-size: 48px;
-            margin-bottom: 10px;
-            color: #ffb300;
+
+        .btn-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 5px;
         }
-        #instructions p {
-            font-size: 20px;
+
+        button, .file-input-label {
+            display: block;
+            width: 100%;
+            padding: 11px;
+            background-color: #0070f3;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 13px;
+            text-align: center;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button:hover, .file-input-label:hover {
+            background-color: #0051b3;
+        }
+
+        button:disabled, .file-input-label:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        button.secondary {
+            background-color: #323238;
+            color: #e1e1e6;
+        }
+
+        button.secondary:hover:not(:disabled) {
+            background-color: #41414c;
+        }
+
+        button.active-filter {
+            background-color: #12a454;
+            color: white;
+        }
+
+        button.danger {
+            background-color: #f75a68;
+        }
+
+        button.danger:hover:not(:disabled) {
+            background-color: #c74652;
+        }
+
+        button.crop-active {
+            background-color: #e16e0e;
+        }
+
+        #file-upload {
+            display: none;
+        }
+
+        hr {
+            border: 0;
+            border-top: 1px solid #2e2e33;
+            margin: 20px 0;
         }
     </style>
 </head>
 <body>
 
-    <div id="crosshair"></div>
-    <div id="ui">Targets Eliminated: <span id="score">0</span></div>
-    
-    <div id="instructions">
-        <h1>3D BATTLEGROUNDS MINI</h1>
-        <p><strong>CLICK TO PLAY</strong></p>
-        <p>Move: WASD | Look: MOUSE | Shoot: LEFT CLICK</p>
+    <header>
+        <h1>Pro Master Photo Editor</h1>
+        <p>Advanced studio parameters: Geometry, Vignette, Hue & Shading</p>
+    </header>
+
+    <div class="container">
+        <!-- Main Canvas Frame -->
+        <div class="workspace">
+            <label for="file-upload" class="upload-placeholder" id="placeholder">
+                <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin: 0 auto 12px;">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 002-2H4a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+                <span>Import Studio Photo</span>
+            </label>
+            <canvas id="editorCanvas"></canvas>
+        </div>
+
+        <!-- Toolbar Sidebar -->
+        <div class="controls">
+            <div class="control-group" style="background: transparent; padding: 0;">
+                <label class="file-input-label" for="file-upload">Load Image Asset</label>
+                <input type="file" id="file-upload" accept="image/*">
+            </div>
+
+            <div class="section-title">Geometric Tools</div>
+            <div class="control-group">
+                <div class="slider-label-wrapper">
+                    <label for="rotate">Rotation Engine</label>
+                    <span id="rotate-val" class="value-badge">0°</span>
+                </div>
+                <input type="range" id="rotate" min="0" max="360" value="0" disabled>
+                
+                <div class="btn-grid" style="margin-top: 10px;">
+                    <button type="button" class="secondary" id="btn-flip" disabled>Mirror ⇆</button>
+                    <button type="button" class="secondary" id="btn-crop" disabled>Crop 50% Center</button>
+                </div>
+            </div>
+
+            <div class="section-title">Coloring & Filters</div>
+            <div class="control-group">
+                <div class="slider-label-wrapper">
+                    <label for="hue">Hue Spectrum Shift</label>
+                    <span id="hue-val" class="value-badge">0°</span>
+                </div>
+                <input type="range" id="hue" min="0" max="360" value="0" disabled>
+            </div>
+
+            <div class="control-group">
+                <div class="slider-label-wrapper">
+                    <label for="brightness">Brightness</label>
+                    <span id="brightness-val" class="value-badge">100%</span>
+                </div>
+                <input type="range" id="brightness" min="0" max="200" value="100" disabled>
+            </div>
+
+            <div class="control-group">
+                <div class="slider-label-wrapper">
+                    <label for="contrast">Contrast</label>
+                    <span id="contrast-val" class="value-badge">100%</span>
+                </div>
+                <input type="range" id="contrast" min="0" max="200" value="100" disabled>
+            </div>
+
+            <div class="control-group">
+                <div class="slider-label-wrapper">
+                    <label for="saturation">Saturation</label>
+                    <span id="saturation-val" class="value-badge">100%</span>
+                </div>
+                <input type="range" id="saturation" min="0" max="200" value="100" disabled>
+            </div>
+
+            <div class="section-title">Effects & Hardware Overlays</div>
+            <div class="control-group">
+                <div class="slider-label-wrapper">
+                    <label for="vignette">Vignette Edge Shade</label>
+                    <span id="vignette-val" class="value-badge">0%</span>
+                </div>
+                <input type="range" id="vignette" min="0" max="100" value="0" disabled>
+            </div>
+
+            <div class="control-group">
+                <div class="slider-label-wrapper">
+                    <label for="noise">Film Grain Noise</label>
+                    <span id="noise-val" class="value-badge">0%</span>
+                </div>
+                <input type="range" id="noise" min="0" max="100" value="0" disabled>
+            </div>
+
+            <div class="control-group">
+                <div class="btn-grid" style="grid-template-columns: 1fr 1fr 1fr; margin-top: 0;">
+                    <button type="button" class="secondary" id="btn-grayscale" disabled>Gray</button>
+                    <button type="button" class="secondary" id="btn-sepia" disabled>Sepia</button>
+                    <button type="button" class="secondary" id="btn-invert" disabled>Invert</button>
+                </div>
+            </div>
+
+            <hr>
+
+            <button type="button" class="danger" id="btn-reset" style="margin-bottom: 10px;" disabled>Reset Workspace</button>
+            <button type="button" id="btn-download" disabled>Export Render Output</button>
+        </div>
     </div>
 
-    <!-- Include Three.js and PointerLockControls from CDN -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/PointerLockControls.js"></script>
-
     <script>
-        // --- 1. SETUP SCENE, CAMERA, & RENDERER ---
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x87ceeb); // Sky blue
-        scene.fog = new THREE.FogExp2(0x87ceeb, 0.015);
+        const fileUpload = document.getElementById('file-upload');
+        const canvas = document.getElementById('editorCanvas');
+        const ctx = canvas.getContext('2d');
+        const placeholder = document.getElementById('placeholder');
+        
+        // Element Links
+        const brightnessSlider = document.getElementById('brightness');
+        const contrastSlider = document.getElementById('contrast');
+        const saturationSlider = document.getElementById('saturation');
+        const hueSlider = document.getElementById('hue');
+        const rotateSlider = document.getElementById('rotate');
+        const vignetteSlider = document.getElementById('vignette');
+        const noiseSlider = document.getElementById('noise');
+        
+        const btnGrayscale = document.getElementById('btn-grayscale');
+        const btnSepia = document.getElementById('btn-sepia');
+        const btnInvert = document.getElementById('btn-invert');
+        const btnFlip = document.getElementById('btn-flip');
+        const btnCrop = document.getElementById('btn-crop');
+        
+        const btnReset = document.getElementById('btn-reset');
+        const btnDownload = document.getElementById('btn-download');
 
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.y = 2; // Approximate human height
+        // App States
+        let originalImg = new Image();
+        let sourceDimensions = { w: 0, h: 0, x: 0, y: 0 };
+        let isGrayscale = false;
+        let isSepia = false;
+        let isInverted = false;
+        let isFlipped = false;
 
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.shadowMap.enabled = true;
-        document.body.appendChild(renderer.domElement);
+        fileUpload.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
 
-        // --- 2. LIGHTING ---
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-        scene.add(ambientLight);
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                originalImg.onload = function() {
+                    // Initialize raw layout boundaries
+                    sourceDimensions.w = originalImg.width;
+                    sourceDimensions.h = originalImg.height;
+                    sourceDimensions.x = 0;
+                    sourceDimensions.y = 0;
 
-        const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-        dirLight.position.set(20, 40, 20);
-        dirLight.castShadow = true;
-        scene.add(dirLight);
+                    canvas.width = originalImg.width;
+                    canvas.height = originalImg.height;
+                    
+                    placeholder.style.display = 'none';
+                    canvas.style.display = 'block';
 
-        // --- 3. ENVIRONMENT (BATTLEGROUND) ---
-        // Green Ground
-        const floorGeo = new THREE.PlaneGeometry(200, 200);
-        const floorMat = new THREE.MeshStandardMaterial({ color: 0x2e8b57, roughness: 0.8 });
-        const floor = new THREE.Mesh(floorGeo, floorMat);
-        floor.rotation.x = -Math.PI / 2;
-        floor.receiveShadow = true;
-        scene.add(floor);
-
-        // --- 4. CONTROLS (First Person) ---
-        const controls = new THREE.PointerLockControls(camera, document.body);
-        const instructions = document.getElementById('instructions');
-
-        instructions.addEventListener('click', () => {
-            controls.lock();
+                    enableControls();
+                    resetToDefaults();
+                    applyPipeline(); 
+                }
+                originalImg.src = event.target.result;
+            }
+            reader.readAsDataURL(file);
         });
 
-        controls.addEventListener('lock', () => {
-            instructions.style.display = 'none';
+        // Set up generic live listeners
+        const uiSliders = [
+            { el: brightnessSlider, suffix: '%' },
+            { el: contrastSlider, suffix: '%' },
+            { el: saturationSlider, suffix: '%' },
+            { el: hueSlider, suffix: '°' },
+            { el: rotateSlider, suffix: '°' },
+            { el: vignetteSlider, suffix: '%' },
+            { el: noiseSlider, suffix: '%' }
+        ];
+
+        uiSliders.forEach(item => {
+            item.el.addEventListener('input', function() {
+                document.getElementById(`${this.id}-val`).textContent = this.value + item.suffix;
+                applyPipeline();
+            });
         });
 
-        controls.addEventListener('unlock', () => {
-            instructions.style.display = 'flex';
+        // Toggle Filter Triggers
+        const toggleFilters = [
+            { btn: btnGrayscale, get: () => isGrayscale, set: (v) => isGrayscale = v },
+            { btn: btnSepia, get: () => isSepia, set: (v) => isSepia = v },
+            { btn: btnInvert, get: () => isInverted, set: (v) => isInverted = v },
+            { btn: btnFlip, get: () => isFlipped, set: (v) => isFlipped = v }
+        ];
+
+        toggleFilters.forEach(item => {
+            item.btn.addEventListener('click', function() {
+                item.set(!item.get());
+                this.classList.toggle('active-filter', item.get());
+                this.classList.toggle('secondary', !item.get());
+                applyPipeline();
+            });
         });
 
-        // Movement Keyboard Listeners
-        const move = { forward: false, backward: false, left: false, right: false };
-        document.addEventListener('keydown', (e) => {
-            if (e.code === 'KeyW') move.forward = true;
-            if (e.code === 'KeyS') move.backward = true;
-            if (e.code === 'KeyA') move.left = true;
-            if (e.code === 'KeyD') move.right = true;
+        // Interactive 50% Center Crop Tool Action
+        btnCrop.addEventListener('click', function() {
+            // Cut viewport square calculations in half
+            const cropW = sourceDimensions.w * 0.5;
+            const cropH = sourceDimensions.h * 0.5;
+            const cropX = sourceDimensions.x + (sourceDimensions.w * 0.25);
+            const cropY = sourceDimensions.y + (sourceDimensions.h * 0.25);
+
+            sourceDimensions.w = cropW;
+            sourceDimensions.h = cropH;
+            sourceDimensions.x = cropX;
+            sourceDimensions.y = cropY;
+
+            canvas.width = cropW;
+            canvas.height = cropH;
+            applyPipeline();
         });
-        document.addEventListener('keyup', (e) => {
-            if (e.code === 'KeyW')Normally I can help with things like this, but I don't seem to have access to that content. You can try again or ask me for something else.
+
+        btnReset.addEventListener('click', function() {
+            resetToDefaults();
+            applyPipeline();
+        });
+
+        btnDownload.addEventListener('click', function() {
+            const link = document.createElement('a');
+            link.download = 'studio-export.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        });
+
+        // --- Core Studio Rendering Operations Pipeline ---
+        function applyPipeline() {
+            if (!originalImg.src) return;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.save();
+
+            // 1. Structural Transformations (Translation, Flipping, Rotating)
+            ctx.translate(canvas.width / 2, canvas.height / 2);
+            
+            if (isFlipped) {
+                ctx.scale(-1, 1); 
+            }
+            
+            const degrees = parseInt(rotateSlider.value);
+            if (degrees !== 0) {
+                ctx.rotate((degrees * Math.PI) / 180);
+            }
+            
+            // 2. Hardware Accelerated CSS Filters Assembly
+            let filterString = `
+                brightness(${brightnessSlider.value}%) 
+                contrast(${contrastSlider.value}%) 
+                saturate(${saturationSlider.value}%)
+                hue-rotate(${hueSlider.value}deg)
+            `;
+            if (isGrayscale) filterString += ' grayscale(100%)';
+            if (isSepia) filterString += ' sepia(100%)';
+            if (isInverted) filterString += ' invert(100%)';
+            
+            ctx.filter = filterString;
+
+            // Draw image relative to translation center coordinates
+            ctx.drawImage(
+                originalImg,
+                sourceDimensions.x, sourceDimensions.y, sourceDimensions.w, sourceDimensions.h,
+                -canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height
+            );
+
+            ctx.restore(); // Drop active CSS matrices to allow clear effect layouts over top
+
+            // 3. Vignette Shader Overlay Generation (Calculated using Radial Gradients)
+            const vignetteIntensity = parseInt(vignetteSlider.value) / 100;
+            if (vignetteIntensity > 0) {
+                const centerX = canvas.width / 2;
+                const centerY = canvas.height / 2;
+                const outerRadius = Math.sqrt(centerX * centerX + centerY * centerY);
+
+                const gradient = ctx.createRadialGradient(centerX, centerY, outerRadius * 0.3, centerX, centerY, outerRadius);
+                gradient.addColorStop(0, 'rgba(0,0,0,0)');
+                gradient.addColorStop(1, `rgba(0,0,0,${vignetteIntensity * 0.85})`);
+                
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+
+            // 4. Perlin-Style Grain Noise Engine (Pixel Matrix Injection)
+            const noiseIntensity = parseInt(noiseSlider.value);
+            if (noiseIntensity > 0) {
+                const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const data = imgData.data;
+                const factor = noiseIntensity * 0.4;
+
+                for (let i = 0; i < data.length; i += 4) {
+                    // Generate unique fast pseudo-random noise shift values
+                    const noise = (Math.random() - 0.5) * factor;
+                    data[i]     = Math.min(255, Math.max(0, data[i] + noise));     // Red
+                    data[i + 1] = Math.min(255, Math.max(0, data[i + 1] + noise)); // Green
+                    data[i + 2] = Math.min(255, Math.max(0, data[i + 2] + noise)); // Blue
+                }
+                ctx.putImageData(imgData, 0, 0);
+            }
+        }
+
+        function enableControls() {
+            const controls = document.querySelectorAll('.controls input, .controls button');
+            controls.forEach(control => control.removeAttribute('disabled'));
+        }
+
+        function resetToDefaults() {
+            sourceDimensions = { w: originalImg.width, h: originalImg.height, x: 0, y: 0 };
+            canvas.width = originalImg.width;
+            canvas.height = originalImg.height;
+
+            brightnessSlider.value = 100;
+            contrastSlider.value = 100;
+            saturationSlider.value = 100;
+            hueSlider.value = 0;
+            rotateSlider.value = 0;
+            vignetteSlider.value = 0;
+            noiseSlider.value = 0;
+            
+            isGrayscale = false;
+            isSepia = false;
+            isInverted = false;
+            isFlipped = false;
+            
+            uiSliders.forEach(item => {
+                const val = item.el.id === 'brightness' || item.el.id === 'contrast' || item.el.id === 'saturation' ? '100' : '0';
+                document.getElementById(`${item.el.id}-val`).textContent = val + item.suffix;
+            });
+
+            toggleFilters.forEach(item => {
+                item.btn.classList.remove('active-filter');
+                item.btn.classList.add('secondary');
+            });
+        }
+    </script>
+</body>
+                        </html>
